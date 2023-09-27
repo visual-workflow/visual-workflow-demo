@@ -1,0 +1,12 @@
+@startuml
+
+    [*] -> WaitingForData
+    WaitingForData --> DataReview : data file received
+    DataReview --> WaitingForData: data file rejected
+    DataReview --> ProcessData : data file accepted
+    ProcessData --> Done: no line errors
+    ProcessData --> ErrorsReview : line errors present
+    ErrorsReview --> ProcessCorrections: corrections accepted
+    ProcessCorrections --> Done
+
+@enduml
