@@ -1,0 +1,34 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus
+server:
+  port: 3030
+
+
+
+spring:
+  main:
+    web-application-type: servlet
+  application:
+    name: temporal-demo
+  mvc:
+    throw-exception-if-no-handler-found: true
+  temporal:
+    connection:
+      target: 127.0.0.1:7233
+      target.namespace: default
+    workers:
+      - task-queue: data-processing-wf
+        capacity:
+          max-concurrent-workflow-task-pollers: 6
+          max-concurrent-activity-task-pollers: 6
+        rate-limits:
+          max-worker-activities-per-second: 0
+          max-task-queue-activities-per-second: 0
+    workflow-cache:
+      max-instances: 10
+      max-threads: 10
+    workersAutoDiscovery:
+      packages: com.kgignatyev.temporal.visualwf.demo

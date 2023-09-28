@@ -7,10 +7,12 @@ import com.kgignatyev.temporal.visualwf.demo.fsm.*
 import io.temporal.activity.ActivityInterface
 import io.temporal.activity.ActivityOptions
 import io.temporal.common.RetryOptions
+import io.temporal.spring.boot.WorkflowImpl
 import io.temporal.workflow.SignalMethod
 import io.temporal.workflow.Workflow
 import io.temporal.workflow.WorkflowInterface
 import io.temporal.workflow.WorkflowMethod
+import org.springframework.stereotype.Component
 import java.time.Duration
 
 
@@ -26,7 +28,7 @@ interface DataProcessingWF:VisualWF{
     fun processData(accountId:String)
 
     @SignalMethod
-    fun dataReceived(filePointer: String)
+    fun dataReceived(filePointer: String?)
     @SignalMethod
     fun dataApproved()
     @SignalMethod
@@ -42,10 +44,11 @@ interface DataProcessingWF:VisualWF{
 
 }
 
+@WorkflowImpl(taskQueues = [DataProcessingWFImpl.QUEUE])
 class DataProcessingWFImpl:DataProcessingWF{
 
     companion object {
-        val QUEUE = "data-processing-wf"
+        const val QUEUE = "data-processing-wf"
     }
 
     lateinit var fsm: DataProcessingFSM
@@ -70,8 +73,12 @@ class DataProcessingWFImpl:DataProcessingWF{
     }
 
     @SignalMethod
-    override fun dataReceived(filePointer: String){
-        fsm.fsm.sendEvent(DataProcessingEvents.DataReceived, FilePointer(filePointer))
+    override fun dataReceived(filePointer: String?){
+        if( filePointer != null) {
+            fsm.fsm.sendEvent(DataProcessingEvents.DataReceived, FilePointer(filePointer))
+        }else{
+            Workflow.getLogger(this::class.java).error("received file pointer is null")
+        }
     }
 
     @SignalMethod
