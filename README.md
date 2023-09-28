@@ -3,6 +3,37 @@ Workflow Visualization Demo
 
 ## 1. Introduction
 
+Hope everyone knows about Temporal.io (https://temporal.io/) - a great workflow engine. If not,
+please familiarize yourself with it and start using, you will love it, and it will save you 
+millions of dollars and many months of development time.
+
+In short, Temporal.io allows us to write workflows in programming language of our choice,
+Unit test them(!!!), and then run them in a distributed environment.
+
+The platform is very stable, reliable, fast, and secure. Developers love it but when it comes 
+to 'selling' it to management and business people, it gets challenging because there is no
+visual representation of the workflow runtime state as a diagram. Business people love diagrams,
+and that allows con artists from low/no code platforms to sell their snake oil (Appian, Jitterbit, etc).
+
+Well, we can do better, and this project is a demonstrates how
+temporal can be enhanced to provide visual representation of workflows.
+
+
+**Note:** Even this project is written with Kotlin and run on JVM platform, the same approach can be used
+with any other language and platform supported by Temporal. 
+
+### Concepts
+*  Worflows provide 2 query methods: 
+    * one that returns workflow definition in PlantUML format
+    * and another that returns name (or names) of current active states
+
+A helper utility can be used make those queries, enhance PlantUML definition with current state information, 
+and create PlantUML server URL with encoded diagram. POC grade implementation can be found here  https://github.com/visual-workflow/visual-workflow-visualizer
+
+*I hope that Temporal team will adopt this (or similar) approach and 
+provide a built-in support for workflow visualization from their UI.*
+
+
 ### Prerequisites
 
  
@@ -12,6 +43,12 @@ Workflow Visualization Demo
 * tctl (brew install tctl)
 * python3 (brew install python3)
 * docker
+* check out https://github.com/visual-workflow/visual-workflow-api next to this project
+  * cd visual-workflow-api
+  * mvn install
+* check out visualizer project  https://github.com/visual-workflow/visual-workflow-visualizer next to this one
+
+Now we are ready to experiment.
 
 ## 2. Workflow Implementation
 
@@ -102,7 +139,7 @@ docker compose up
 
 ### 3.2. Run Workflow and Activities
 
-Those are implemented as SpringBoot application and can be run in a separate window with:
+Those are implemented as SpringBoot application and can be run in a separate terminal window with:
 
 ```shell
 cd <project-root>
@@ -138,11 +175,19 @@ export WFID=a23da575-3ae3-43cf-bd0d-886470f34644
 At this point we can see the workflow state in the Temporal Web UI by 
 opening http://localhost:8080/
 
+![Temporal Web UI](./docs/temporal-web-ui.png)
+
 And we can see the workflow state and workflow definition in the console :
 
 ```shell
  ./scripts/send-query.sh getWorkflowInfo 
+Query result:
+[{"legend":"Account: account42","activeStates":[{"stateName":"WaitingForData","isError":null,"comment":null}]}]
+
  ./scripts/send-query.sh getPlantUMLWorkflowDefinition
+ 
+Query result:
+["@startuml\n\n    [*] -> WaitingForData\n    WaitingForData --> DataReview : data file received\n    DataReview --> WaitingForData: data file rejected\n    DataReview --> ProcessData : data file accepted\n    ProcessData --> Done: no line errors\n    ProcessData --> ErrorsReview : line errors present\n    ErrorsReview --> ProcessCorrections: corrections accepted\n    ProcessCorrections --> Done\n\n@enduml\n"]
 ```
 
 and we can run visualizer helper which will open a browser window with the workflow diagram:
@@ -150,6 +195,11 @@ and we can run visualizer helper which will open a browser window with the workf
 ```shell
  ./scripts/visualize-wf.sh
 ```
+Note the PlantUML URL starts with ~h, that is because simple HEX encoding was use, but it can be
+more efficient with using PlantUML recommended compression (https://plantuml.com/text-encoding).
+
+![Workflow Diagram: Waiting for data](./docs/1waiting-for-data-browser.png)
+
 
 then we can send signal to advance workflow and then visualize it again:
 
@@ -158,9 +208,24 @@ then we can send signal to advance workflow and then visualize it again:
  ./scripts/visualize-wf.sh
 ```
 
+![Workflow Diagram: Data Review](./docs/data-review-wf.png)
+
 and now we can send another signal to advance workflow
 
 ```shell
  ./scripts/send-signal.sh dataApproved
  ./scripts/visualize-wf.sh
 ```
+
+![Workflow Diagram: Process Data](./docs/process-data-wf.png)
+
+
+Conclusion: in real life we usually create a custom dashboard type of UI to show workflows to customers and
+business users (my teams were able to implement such UI in couple of days with using Angular ) and it provides 
+the best of both worlds:
+* business users are happy and can see the workflow state and progress
+* developers are happy because they can use full power of Temporal.io and their favorite programming language to implement workflows
+* operations team happy because of amazing observability: they can see workflows as business users, and see all the nitty-gritty details in Temporal Web UI
+* security team is happy because no ports are open and yet services are communicating securely across clouds
+* product owners are happy because new functionality can be implemented in days, not months, and at a fraction of cost
+
