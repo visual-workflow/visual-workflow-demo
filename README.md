@@ -40,7 +40,7 @@ provide a built-in support for workflow visualization from their UI.*
 * A computer with OS X or Linux (Windows can be used, but more painful)
 * Java 21
 * Maven (sdk install maven)
-* tctl (brew install tctl)
+* temporal cli (brew install temporal)
 * python3 (brew install python3)
 * docker
 * check out https://github.com/visual-workflow/visual-workflow-api next to this project
@@ -63,6 +63,11 @@ As we can see, the workflow is defined in a very abstract way, and we can have a
 visualization of workflow.
 
 ![Workflow Diagram](./docs/data-processing-wf.png)
+
+and to colorize the diagram we simply need to add lines like 'state <StateName> #<color>' to the diagram definition.
+So, our helper script simply need to prepend closing tag with those lines. Then workflow diagram will look like this
+
+![Workflow Diagram with colors](./docs/wf-definition-with-plantUML-colored.png)
 
 ### 2.1. Workflow Definition
 
